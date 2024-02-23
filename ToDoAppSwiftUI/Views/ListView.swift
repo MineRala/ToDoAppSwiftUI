@@ -21,6 +21,7 @@ struct ListView: View {
     @State private var isSortOptionsVisible = false
     @State var filteredItems: [ItemModel]  = []
     @State private var isCompletedTapped = false
+    @State private var isEmptyItemsList = false
     
     var body: some View {
         NavigationView {
@@ -28,6 +29,9 @@ struct ListView: View {
                 if items.isEmpty {
                     NoItemsView(delegate: self)
                         .transition(AnyTransition.opacity.animation(.easeIn))
+                        .onAppear {
+                            isEmptyItemsList = true
+                        }
                 } else {
                     VStack {
                         SearchBarView(text: $searchText)
@@ -49,6 +53,7 @@ struct ListView: View {
                             }
                         }
                         .onAppear {
+                            isEmptyItemsList = false
                             updateList()
                         }
                         // cell tıklanıp item setlenmeden önce sheet yapılıyor sayfa açılması için o yüzden selectedItem göderiyorum sheet ederken
@@ -68,33 +73,35 @@ struct ListView: View {
                 }
             }
             .navigationBarTitle("TODO LIST", displayMode: .large)
-            .navigationBarItems(leading: Button(action: {
-                isCompletedTapped.toggle()
-                updateList()
-            }, label: {
-                Text("Completed Items")
-                    .foregroundColor(isCompletedTapped ? .darkGreenColor : .secondaryAccentColor)
-                    .font(.headline)
-            })
-                                
-                                , trailing:
-                                    HStack {
-                Button(action: {
-                    isSortOptionsVisible.toggle()
-                }) {
-                    Text("Sort")
-                        .foregroundColor(.secondaryAccentColor)
+            .navigationBarItems(
+                leading: Button(action: {
+                    isCompletedTapped.toggle()
+                    updateList()
+                }, label: {
+                    Text("Completed Items")
+                        .foregroundColor(isCompletedTapped ? .darkGreenColor : .secondaryAccentColor)
                         .font(.headline)
-                }
-                Button(action: {
-                    showingSheet.toggle()
-                }) {
-                    Text("Add")
-                        .foregroundColor(Color.secondaryAccentColor)
-                        .font(.headline)
-                }
-                .disabled(isSortOptionsVisible)
-            }
+                })
+                .disabled(isEmptyItemsList),
+                trailing:
+                    HStack {
+                        Button(action: {
+                            isSortOptionsVisible.toggle()
+                        }) {
+                            Text("Sort")
+                                .foregroundColor(.secondaryAccentColor)
+                                .font(.headline)
+                        }
+                        .disabled(isEmptyItemsList)
+                        Button(action: {
+                            showingSheet.toggle()
+                        }) {
+                            Text("Add")
+                                .foregroundColor(Color.secondaryAccentColor)
+                                .font(.headline)
+                        }
+                        .disabled(isSortOptionsVisible)
+                    }
             )
             .sheet(isPresented: $showingSheet) {
                 AddView(itemModel: selectedItem, delegate: self)
